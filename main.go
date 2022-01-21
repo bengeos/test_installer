@@ -26,11 +26,7 @@ func configurationQuestion(reader *bufio.Reader, description string, defaultValu
 
 func commandExecutor(application string, args ...string){
 	cmd := exec.Command(application, args...)	
-	exec_error := cmd.Start()
-	if exec_error != nil {
-		fmt.Println("Error: " + ": ", exec_error)
-	}
-	exec_error = cmd.Wait()
+	exec_error := cmd.Run()
 	if exec_error != nil {
 		fmt.Println("Error: " + ": ", exec_error)
 	}
@@ -98,10 +94,12 @@ func main() {
 	time.Sleep(2)
 	fmt.Println(string(colorRed), "Check Database")
 	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan migrate")
-	time.Sleep(2)
+	time.Sleep(5)
 	fmt.Println(string(colorRed), "Check Configs")
 	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan config:cache")
+	time.Sleep(1)
 	fmt.Println(string(colorRed), "Seeding")
 	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan db:seed")
+	time.Sleep(5)
 	fmt.Println(string(colorRed), "Finished successfully")
 }
