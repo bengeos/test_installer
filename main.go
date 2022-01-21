@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
+
+	"github.com/go-cmd/cmd"
 )
 
 func configurationQuestion(reader *bufio.Reader, description string, defaultValue string) (value string) {
@@ -22,17 +24,39 @@ func configurationQuestion(reader *bufio.Reader, description string, defaultValu
 	return defaultValue;
 }
 
-func commandExecutor(out *bytes.Buffer, cmdError *bytes.Buffer, application string, args ...string){
+func commandExecutor(application string, args ...string){
 	cmd := exec.Command(application, args...)	
-	cmd.Stdout = out
-	cmd.Stderr = cmdError
-	exec_error := cmd.Run()
-	cmd.Wait()
+	exec_error := cmd.Start()
 	if exec_error != nil {
-		fmt.Println("Error: " + ": " + cmdError.String())
-		return
+		fmt.Println("Error: " + ": ", exec_error)
 	}
-	cmd.Process.Kill()
+	exec_error = cmd.Wait()
+	if exec_error != nil {
+		fmt.Println("Error: " + ": ", exec_error)
+	}
+}
+
+func RunCMD(path string, args []string, debug bool) (out string, err error) {
+    cmd := exec.Command(path, args...)
+    var b []byte
+    b, err = cmd.Output()
+    out = string(b)
+    if debug {
+        fmt.Println(strings.Join(cmd.Args[:], " "))
+        if err != nil {
+            fmt.Println("RunCMD ERROR", err)
+            fmt.Println(out)
+        }
+    }
+    return
+}
+
+func RunCMD2(name string, args ...string) (err error, stdout, stderr []string) {
+    c := cmd.NewCmd(name, args...)
+    s := <-c.Start()
+    stdout = s.Stdout
+    stderr = s.Stderr
+    return
 }
 
 func main() {
@@ -45,10 +69,6 @@ func main() {
 	var WEB_APP_PORT = "4200"
 	var API_APP_PORT = "8000"
 	var WEB_APP_DOMAIN = configurationQuestion(reader, "Web Application Domain name","https://appcreator.com/")
-	var DB_PORT = "4454"
-	var DB_DATABASE = "app_creator_mysql"
-	var DB_PASSWORD = "yNaJuleX41aKNiBRy54VLXMxos30"
-	var DB_USERNAME = "admin"
 	// Create Environment File
 	filename := ".env"
     fileStat, err := os.Stat(filename)
@@ -66,17 +86,22 @@ func main() {
 	fmt.Fprintf(file, "WEB_APP_PORT=%s\n", WEB_APP_PORT)
 	fmt.Fprintf(file, "API_APP_PORT=%s\n", API_APP_PORT)
 	fmt.Fprintf(file, "WEB_APP_DOMAIN=%s\n", WEB_APP_DOMAIN)
-	fmt.Fprintf(file, "DB_PORT=%s\n", DB_PORT)
-	fmt.Fprintf(file, "DB_DATABASE=%s\n", DB_DATABASE)
-	fmt.Fprintf(file, "DB_PASSWORD=%s\n", DB_PASSWORD)
-	fmt.Fprintf(file, "DB_USERNAME=%s\n", DB_USERNAME)
+	fmt.Fprintf(file, "DB_DATABASE=%s\n", "app_creator_db")
+	fmt.Fprintf(file, "DB_PASSWORD=%s\n", "password123")
+	fmt.Fprintf(file, "DB_USERNAME=%s\n", "admin")
 	fmt.Println(string(colorRed), "-----------------------------------------")
-	var out bytes.Buffer
-	var stderr bytes.Buffer
 	fmt.Println(string(colorRed), "Getting Started . . . ")
-	commandExecutor(&out, &stderr, "docker-compose", "down")
-	fmt.Println(string(colorRed), "Starting Application . . .")
-	commandExecutor(&out, &stderr, "docker-compose", "up", "-d")
-	fmt.Println(string(colorRed), "Configuring . . .")
-	commandExecutor(&out, &stderr, "docker-compose exec app_creator_api php artisan config:cache")
+	commandExecutor( "docker-compose", "down")
+	time.Sleep(1)
+	fmt.Println(string(colorRed), "Starting Application")
+	commandExecutor( "docker-compose", "up", "-d")
+	time.Sleep(2)
+	fmt.Println(string(colorRed), "Check Database")
+	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan migrate")
+	time.Sleep(2)
+	fmt.Println(string(colorRed), "Check Configs")
+	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan config:cache")
+	fmt.Println(string(colorRed), "Seeding")
+	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan db:seed")
+	fmt.Println(string(colorRed), "Finished successfully")
 }

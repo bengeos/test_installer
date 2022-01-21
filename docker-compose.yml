@@ -6,13 +6,15 @@ services:
         ports:
             - ${WEB_APP_PORT}:80
         environment:
-          API_URL: ${API_APP_DOMAIN}
+          API_URL: ${WEB_APP_DOMAIN}
         networks:
             - app_creator_network
 
     app_creator_api:
         image: gluontech/app_creator_api:1.0.1
         restart: unless-stopped
+        volumes:
+            - project-volume:/var/www/html
         depends_on:
             - app_creator_mysql
         networks:
@@ -24,6 +26,7 @@ services:
         ports:
             - ${API_APP_PORT}:80
         volumes:
+            - project-volume:/var/www/html
             - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
         depends_on:
             - app_creator_api
@@ -43,8 +46,6 @@ services:
         image: mysql:8.0
         restart: unless-stopped
         tty: true
-        ports:
-            - ${DB_PORT}:3306
         volumes:
             - ./database/mysql:/var/lib/mysql
         environment:
@@ -54,7 +55,8 @@ services:
             MYSQL_USER: ${DB_USERNAME}
         networks:
             - app_creator_network
-
+volumes:
+  project-volume:
 networks:
     app_creator_network:
         driver: bridge
