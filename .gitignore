@@ -1,4 +1,5 @@
 database
 .env
 ./env
+/.env
 configs/nginx

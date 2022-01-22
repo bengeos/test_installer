@@ -64,12 +64,11 @@ func main() {
 	var WEB_APP_PORT = "4200"
 	var API_APP_PORT = "8000"
 	var DOMAIN_NAME = configurationQuestion(reader, "Web Application Domain name","appcreator.com")
-	// Create Environment File
+	// Create New Environment File
 	filename := ".env"
     fileStat, err := os.Stat(filename)
 	if fileStat != nil {
         os.Remove(filename)
-		os.Remove("database")
     }
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
 	if err != nil {
