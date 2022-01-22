@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/go-cmd/cmd"
 )
@@ -58,7 +57,7 @@ func RunCMD2(name string, args ...string) (err error, stdout, stderr []string) {
 func main() {
 	colorRed := "\033[31m"
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println(string(colorRed), "   Welcome to App Creator Installation   ")
+	fmt.Println(string(colorRed), "\n\n   Welcome to App Creator Installation   ")
 	fmt.Println(string(colorRed), "-----------------------------------------")
 	// Configs to be collected from user
 	var APP_NAME = configurationQuestion(reader, "Application Name","App-Creator")
@@ -85,21 +84,22 @@ func main() {
 	fmt.Fprintf(file, "DB_DATABASE=%s\n", "app_creator_db")
 	fmt.Fprintf(file, "DB_PASSWORD=%s\n", "password123")
 	fmt.Fprintf(file, "DB_USERNAME=%s\n", "admin")
-	fmt.Println(string(colorRed), "-----------------------------------------")
-	fmt.Println(string(colorRed), "Getting Started . . . ")
-	commandExecutor( "docker-compose", "down")
-	time.Sleep(1)
-	fmt.Println(string(colorRed), "Starting Application")
-	commandExecutor( "docker-compose", "up", "-d")
-	time.Sleep(2)
-	fmt.Println(string(colorRed), "Check Database")
-	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan migrate")
-	time.Sleep(5)
-	fmt.Println(string(colorRed), "Check Configs")
-	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan config:cache")
-	time.Sleep(1)
-	fmt.Println(string(colorRed), "Seeding")
-	commandExecutor( "docker-compose", "exec", "app_creator_api php artisan db:seed")
-	time.Sleep(5)
+	// fmt.Println(string(colorRed), "-----------------------------------------")
+	// fmt.Println(string(colorRed), "Getting Started . . . ")
+	// commandExecutor( "docker-compose", "down")
+	// time.Sleep(1)
+	// fmt.Println(string(colorRed), "Starting Application")
+	// commandExecutor( "docker-compose", "up", "-d")
+	// time.Sleep(2)
+	// fmt.Println(string(colorRed), "Check Database")
+	// commandExecutor( "docker-compose", "exec", "app_creator_api php artisan migrate")
+	// time.Sleep(5)
+	// fmt.Println(string(colorRed), "Check Configs")
+	// commandExecutor( "docker-compose", "exec", "app_creator_api php artisan config:cache")
+	// time.Sleep(1)
+	// fmt.Println(string(colorRed), "Seeding")
+	// commandExecutor( "docker-compose", "exec", "app_creator_api php artisan db:seed")
+	// time.Sleep(5)
 	fmt.Println(string(colorRed), "Finished successfully")
+	fmt.Println(string(colorRed), "-----------------------------------------")
 }
