@@ -41,7 +41,7 @@ services:
             - 443:443
         volumes:
             - ./configs/:/src
-            - /etc/letsencrypt/live/${DOMAIN_NAME}/:/etc/letsencrypt/live/${DOMAIN_NAME}
+            - /etc/letsencrypt/live/${DOMAIN_NAME}/:/home
         command: ./src/run_nginx.sh
         environment:
             DOMAIN_NAME: ${DOMAIN_NAME}
