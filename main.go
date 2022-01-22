@@ -64,7 +64,7 @@ func main() {
 	var APP_NAME = configurationQuestion(reader, "Application Name","App-Creator")
 	var WEB_APP_PORT = "4200"
 	var API_APP_PORT = "8000"
-	var WEB_APP_DOMAIN = configurationQuestion(reader, "Web Application Domain name","https://appcreator.com/")
+	var DOMAIN_NAME = configurationQuestion(reader, "Web Application Domain name","appcreator.com")
 	// Create Environment File
 	filename := ".env"
     fileStat, err := os.Stat(filename)
@@ -81,7 +81,7 @@ func main() {
 	fmt.Fprintf(file, "APP_NAME=%s\n", APP_NAME)
 	fmt.Fprintf(file, "WEB_APP_PORT=%s\n", WEB_APP_PORT)
 	fmt.Fprintf(file, "API_APP_PORT=%s\n", API_APP_PORT)
-	fmt.Fprintf(file, "WEB_APP_DOMAIN=%s\n", WEB_APP_DOMAIN)
+	fmt.Fprintf(file, "DOMAIN_NAME=%s\n", DOMAIN_NAME)
 	fmt.Fprintf(file, "DB_DATABASE=%s\n", "app_creator_db")
 	fmt.Fprintf(file, "DB_PASSWORD=%s\n", "password123")
 	fmt.Fprintf(file, "DB_USERNAME=%s\n", "admin")
