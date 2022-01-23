@@ -5,7 +5,6 @@ services:
         restart: unless-stopped
         environment:
             DOMAIN_NAME: ${DOMAIN_NAME}
-            DEBUG: test
         networks:
             - app_creator_network
 
