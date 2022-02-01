@@ -2,7 +2,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -10,48 +15,54 @@ import (
 	"github.com/go-cmd/cmd"
 )
 
+type LicenseResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    string `json:"data"`
+}
+
 func configurationQuestion(reader *bufio.Reader, description string, defaultValue string) (value string) {
 	colorBlue := "\033[34m"
 	colorWhite := "\033[37m"
-	fmt.Print(string(colorBlue), description + " (" + defaultValue +") ")
+	fmt.Print(string(colorBlue), description+" ("+defaultValue+") ")
 	value, _ = reader.ReadString('\n')
 	if value != "\n" {
 		fmt.Println(string(colorWhite), description, value)
 		return strings.TrimSuffix(value, "\n")
 	}
 	fmt.Println(string(colorWhite), description, defaultValue)
-	return defaultValue;
+	return defaultValue
 }
 
-func commandExecutor(application string, args ...string){
-	cmd := exec.Command(application, args...)	
+func commandExecutor(application string, args ...string) {
+	cmd := exec.Command(application, args...)
 	exec_error := cmd.Run()
 	if exec_error != nil {
-		fmt.Println("Error: " + ": ", exec_error)
+		fmt.Println("Error: "+": ", exec_error)
 	}
 }
 
 func RunCMD(path string, args []string, debug bool) (out string, err error) {
-    cmd := exec.Command(path, args...)
-    var b []byte
-    b, err = cmd.Output()
-    out = string(b)
-    if debug {
-        fmt.Println(strings.Join(cmd.Args[:], " "))
-        if err != nil {
-            fmt.Println("RunCMD ERROR", err)
-            fmt.Println(out)
-        }
-    }
-    return
+	cmd := exec.Command(path, args...)
+	var b []byte
+	b, err = cmd.Output()
+	out = string(b)
+	if debug {
+		fmt.Println(strings.Join(cmd.Args[:], " "))
+		if err != nil {
+			fmt.Println("RunCMD ERROR", err)
+			fmt.Println(out)
+		}
+	}
+	return
 }
 
 func RunCMD2(name string, args ...string) (err error, stdout, stderr []string) {
-    c := cmd.NewCmd(name, args...)
-    s := <-c.Start()
-    stdout = s.Stdout
-    stderr = s.Stderr
-    return
+	c := cmd.NewCmd(name, args...)
+	s := <-c.Start()
+	stdout = s.Stdout
+	stderr = s.Stderr
+	return
 }
 
 func main() {
@@ -60,16 +71,63 @@ func main() {
 	fmt.Println(string(colorRed), "\n\n   Welcome to App Creator Installation   ")
 	fmt.Println(string(colorRed), "-----------------------------------------")
 	// Configs to be collected from user
-	var APP_NAME = configurationQuestion(reader, "Application Name","App-Creator")
+	var APP_NAME = configurationQuestion(reader, "Application Name", "App-Creator")
 	var WEB_APP_PORT = "4200"
 	var API_APP_PORT = "8000"
-	var DOMAIN_NAME = configurationQuestion(reader, "Web Application Domain name","appcreator.com")
+	var DOMAIN_NAME = configurationQuestion(reader, "Web Application Domain name", "appcreator.com")
+
+	// ---------------------------
+	// Check License
+	// var LICENSE_EMAIL = configurationQuestion(reader, "Enter your email address", "example@email.com")
+	// if LICENSE_EMAIL == "example@email.com" && true {
+	// 	println("Whoops! invalid email addres")
+	// 	return
+	// }
+	var LICENSE_KEY = configurationQuestion(reader, "Enter your License Key", "XXXX-XXXX-XXXX-XXXX")
+	if LICENSE_KEY == "XXXX-XXXX-XXXX-XXXX" {
+		fmt.Print(string(colorRed), "Whoops! invalid License Key used")
+		fmt.Println("")
+		fmt.Println(string(colorRed), "***********************************")
+		return
+	}
+	requestForm := map[string]string{"product_id": "A16D1689", "license_code": LICENSE_KEY, "client_name": DOMAIN_NAME}
+	jsonValue, _ := json.Marshal(requestForm)
+	println(string(jsonValue))
+	client := http.Client{}
+	req, err := http.NewRequest("POST", "https://updates.nwcode.io/api/verify_license", bytes.NewBuffer(jsonValue))
+	req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
+	req.Header.Set("LB-LANG", "en")
+	req.Header.Set("LB-URL", "https://updates.nwcode.io")
+	req.Header.Set("LB-IP", "127.0.0.1")
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Whoops This!: ", err)
+		return
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	var licenseResp LicenseResponse
+	err = json.Unmarshal(body, &licenseResp)
+	if err != nil {
+		fmt.Println("Whoops Here!: ", err.Error())
+		return
+	}
+	if !licenseResp.Status {
+		// fmt.Print(string(colorRed), licenseResp.Message)
+		fmt.Println("")
+		fmt.Println(string(colorRed), "***********************************")
+		return
+	}
+
 	// Create New Environment File
 	filename := ".env"
-    fileStat, err := os.Stat(filename)
+	fileStat, err := os.Stat(filename)
 	if fileStat != nil {
-        os.Remove(filename)
-    }
+		os.Remove(filename)
+	}
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
 	if err != nil {
 		fmt.Println(err)
@@ -83,6 +141,8 @@ func main() {
 	fmt.Fprintf(file, "DB_DATABASE=%s\n", "app_creator_db")
 	fmt.Fprintf(file, "DB_PASSWORD=%s\n", "password123")
 	fmt.Fprintf(file, "DB_USERNAME=%s\n", "admin")
+	fmt.Fprintf(file, "LICENSE_NAME=%s\n", DOMAIN_NAME)
+	fmt.Fprintf(file, "LICENSE_KEY=%s\n", LICENSE_KEY)
 	// fmt.Println(string(colorRed), "-----------------------------------------")
 	// fmt.Println(string(colorRed), "Getting Started . . . ")
 	// commandExecutor( "docker-compose", "down")
