@@ -92,15 +92,7 @@ func main() {
 	}
 	requestForm := map[string]string{"product_id": "A16D1689", "license_code": LICENSE_KEY, "client_name": DOMAIN_NAME}
 	jsonValue, _ := json.Marshal(requestForm)
-	println(string(jsonValue))
-	client := http.Client{}
-	req, err := http.NewRequest("POST", "https://updates.nwcode.io/api/verify_license", bytes.NewBuffer(jsonValue))
-	req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
-	req.Header.Set("LB-LANG", "en")
-	req.Header.Set("LB-URL", "https://updates.nwcode.io")
-	req.Header.Set("LB-IP", "127.0.0.1")
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	resp, err := http.Post("http://127.0.0.1:8000/api/licenses/verify", "application/json", bytes.NewBuffer(jsonValue))
 	if err != nil {
 		fmt.Println("Whoops This!: ", err)
 		return
@@ -116,7 +108,7 @@ func main() {
 		return
 	}
 	if !licenseResp.Status {
-		// fmt.Print(string(colorRed), licenseResp.Message)
+		fmt.Print(string(colorRed), licenseResp.Message)
 		fmt.Println("")
 		fmt.Println(string(colorRed), "***********************************")
 		return
