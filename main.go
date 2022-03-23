@@ -17,8 +17,8 @@ import (
 )
 
 type LicenseResponse struct {
-	status  bool   `json:"status"`
-	message string `json:"message"`
+	status  bool        `json:"status"`
+	message string      `json:"message"`
 	data    interface{} `json:"data"`
 }
 
@@ -66,19 +66,19 @@ func RunCMD2(name string, args ...string) (err error, stdout, stderr []string) {
 	return
 }
 
-func licenseVerify(url, method string) (*http.Response , error) {
-    client := &http.Client{
-        Timeout: time.Second * 0,
-    }
-    req, err := http.NewRequest(method, url, nil)
-    if err != nil {
-        return nil, err
-    }
-    req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
-    req.Header.Add("LB-LANG", "en")
-    req.Header.Add("LB-URL", "http://127.0.0.1")
-    req.Header.Add("LB-IP", "127.0.0.1")
-    response, err := client.Do(req);
+func licenseVerify(url, method string) (*http.Response, error) {
+	client := &http.Client{
+		Timeout: time.Second * 0,
+	}
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
+	req.Header.Add("LB-LANG", "en")
+	req.Header.Add("LB-URL", "http://127.0.0.1")
+	req.Header.Add("LB-IP", "127.0.0.1")
+	response, err := client.Do(req)
 	return response, err
 }
 
@@ -111,19 +111,19 @@ func main() {
 	jsonValue, _ := json.Marshal(requestForm)
 	// resp, err := http.Post("https://updates.nwcode.io/licenses/verify", "application/json", bytes.NewBuffer(jsonValue))
 	client := &http.Client{
-        Timeout: time.Second * 0,
-    }
-    req, err := http.NewRequest("POST", "https://updates.nwcode.io/api/verify_license", bytes.NewBuffer(jsonValue))
-    if err != nil {
-        fmt.Println("Whoops Error on LIcense: ", err.Error())
+		Timeout: time.Second * 0,
+	}
+	req, err := http.NewRequest("POST", "https://updates.nwcode.io/api/verify_license", bytes.NewBuffer(jsonValue))
+	if err != nil {
+		fmt.Println("Whoops Error on LIcense: ", err.Error())
 		return
-    }
+	}
 	req.Header.Set("Content-Type", "application/json")
-    req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
-    req.Header.Add("LB-LANG", "en")
-    req.Header.Add("LB-URL", "http://127.0.0.1")
-    req.Header.Add("LB-IP", "127.0.0.1")
-    resp, err := client.Do(req);
+	req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
+	req.Header.Add("LB-LANG", "en")
+	req.Header.Add("LB-URL", "http://127.0.0.1")
+	req.Header.Add("LB-IP", "127.0.0.1")
+	resp, err := client.Do(req)
 
 	if err != nil {
 		fmt.Println("Whoops Verification Failed: ", err)
