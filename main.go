@@ -11,14 +11,15 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/go-cmd/cmd"
 )
 
 type LicenseResponse struct {
-	Status  bool   `json:"status"`
-	Message string `json:"message"`
-	Data    string `json:"data"`
+	status  bool   `json:"status"`
+	message string `json:"message"`
+	data    interface{} `json:"data"`
 }
 
 func configurationQuestion(reader *bufio.Reader, description string, defaultValue string) (value string) {
@@ -65,6 +66,22 @@ func RunCMD2(name string, args ...string) (err error, stdout, stderr []string) {
 	return
 }
 
+func licenseVerify(url, method string) (*http.Response , error) {
+    client := &http.Client{
+        Timeout: time.Second * 0,
+    }
+    req, err := http.NewRequest(method, url, nil)
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
+    req.Header.Add("LB-LANG", "en")
+    req.Header.Add("LB-URL", "http://127.0.0.1")
+    req.Header.Add("LB-IP", "127.0.0.1")
+    response, err := client.Do(req);
+	return response, err
+}
+
 func main() {
 	colorRed := "\033[31m"
 	reader := bufio.NewReader(os.Stdin)
@@ -92,9 +109,24 @@ func main() {
 	}
 	requestForm := map[string]string{"product_id": "A16D1689", "license_code": LICENSE_KEY, "client_name": DOMAIN_NAME}
 	jsonValue, _ := json.Marshal(requestForm)
-	resp, err := http.Post("https://updates.nwcode.io/licenses/verify", "application/json", bytes.NewBuffer(jsonValue))
+	// resp, err := http.Post("https://updates.nwcode.io/licenses/verify", "application/json", bytes.NewBuffer(jsonValue))
+	client := &http.Client{
+        Timeout: time.Second * 0,
+    }
+    req, err := http.NewRequest("POST", "https://updates.nwcode.io/api/verify_license", bytes.NewBuffer(jsonValue))
+    if err != nil {
+        fmt.Println("Whoops Error on LIcense: ", err.Error())
+		return
+    }
+	req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
+    req.Header.Add("LB-LANG", "en")
+    req.Header.Add("LB-URL", "http://127.0.0.1")
+    req.Header.Add("LB-IP", "127.0.0.1")
+    resp, err := client.Do(req);
+
 	if err != nil {
-		fmt.Println("Whoops This!: ", err)
+		fmt.Println("Whoops Verification Failed: ", err)
 		return
 	}
 	body, err := ioutil.ReadAll(resp.Body)
@@ -104,13 +136,12 @@ func main() {
 	var licenseResp LicenseResponse
 	err = json.Unmarshal(body, &licenseResp)
 	if err != nil {
-		fmt.Println("Whoops Error!: ", err.Error())
+		fmt.Println("Whoops Error THIS!: ", err.Error())
 		return
 	}
-	if !licenseResp.Status {
-		fmt.Print(string(colorRed), licenseResp.Message)
-		fmt.Println("")
-		fmt.Println(string(colorRed), "***********************************")
+	if !licenseResp.status {
+		fmt.Print(string(colorRed))
+		fmt.Println("Whoops! unable to verify license key")
 		return
 	}
 
