@@ -17,9 +17,8 @@ import (
 )
 
 type LicenseResponse struct {
-	status  bool        `json:"status"`
-	message string      `json:"message"`
-	data    interface{} `json:"data"`
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
 }
 
 func configurationQuestion(reader *bufio.Reader, description string, defaultValue string) (value string) {
@@ -82,6 +81,11 @@ func licenseVerify(url, method string) (*http.Response, error) {
 	return response, err
 }
 
+func PrettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
+}
+
 func main() {
 	colorRed := "\033[31m"
 	reader := bufio.NewReader(os.Stdin)
@@ -107,13 +111,13 @@ func main() {
 		fmt.Println(string(colorRed), "***********************************")
 		return
 	}
-	requestForm := map[string]string{"product_id": "A16D1689", "license_code": LICENSE_KEY, "client_name": DOMAIN_NAME}
+	requestForm := map[string]string{"product_id": "96BFCCF3", "license_code": LICENSE_KEY, "client_name": DOMAIN_NAME, "verify_type": "non_envato"}
 	jsonValue, _ := json.Marshal(requestForm)
 	// resp, err := http.Post("https://updates.nwcode.io/licenses/verify", "application/json", bytes.NewBuffer(jsonValue))
 	client := &http.Client{
 		Timeout: time.Second * 0,
 	}
-	req, err := http.NewRequest("POST", "https://updates.nwcode.io/api/verify_license", bytes.NewBuffer(jsonValue))
+	req, err := http.NewRequest("POST", "https://updates.nwcode.io/api/activate_license", bytes.NewBuffer(jsonValue))
 	if err != nil {
 		fmt.Println("Whoops Error on LIcense: ", err.Error())
 		return
@@ -121,8 +125,8 @@ func main() {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("LB-API-KEY", "764B8331526BC2008F96")
 	req.Header.Add("LB-LANG", "en")
-	req.Header.Add("LB-URL", "http://127.0.0.1")
-	req.Header.Add("LB-IP", "127.0.0.1")
+	req.Header.Add("LB-URL", "http://197.10.22.23")
+	req.Header.Add("LB-IP", "197.10.22.23")
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -139,8 +143,10 @@ func main() {
 		fmt.Println("Whoops Error THIS!: ", err.Error())
 		return
 	}
-	if !licenseResp.status {
+	if !licenseResp.Status {
 		fmt.Print(string(colorRed))
+		fmt.Println(licenseResp.Status)
+		fmt.Println(string(body))
 		fmt.Println("Whoops! unable to verify license key")
 		return
 	}
